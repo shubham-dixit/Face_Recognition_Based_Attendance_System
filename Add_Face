@@ -1,0 +1,67 @@
+import cv2
+import os
+import codecs
+import csv
+import pickle
+import time
+import numpy as np
+from sklearn import preprocessing
+from PIL import Image
+
+'''print('\n Availabale devices')
+for i in range (pa.get_device_count()):
+    dev = pa.get_device_info_by_index(i)
+    name = dev['name'].encode('utf-8')
+    print(i, name, dev['maxInputChannels'], dev['maxOutputChannels'])
+    
+print('\n default input and output device')
+print(pa.get_default_input_device_info())
+print(pa.get_default_output_device_info()) '''
+
+name = input("Enter Name:")
+
+def assure_path_exists(path):
+    dir = os.path.dirname(path)
+    if not os.path.exists(dir):
+        os.mkdirs(dir)
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+def add_face(name): 
+    #name = input("What is your name ?")   # Manually add the name of the user whose face is to be added
+    # last row value of csv file imported
+    # with open('Face_id.csv', 'rU', encoding = 'utf-16') as SD:
+    reader = csv.reader(codecs.open('Face_id.csv','rU','utf-8'))
+    rows = list(reader)
+    tot_rows = len(rows)
+    face_id = tot_rows + 1
+    
+    # Appending the new row in the csv file
+    row = [face_id , name]
+    with open('Face_id.csv','a') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(row)
+    csvfile.close()
+             
+    vid_cam = cv2.VideoCapture(0)      # Enables the webcam 
+    face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')  # Using the haarcascade classifier for the Face detection
+    #face_id = 1
+    count = 0 # Holds the number of frames taken into consideration
+    
+    while(vid_cam.isOpened()):            # Loop till the web_cam is On
+         ret, image_frame = vid_cam.read()     # Returns the boolean value ret and image frame
+         gray = cv2.cvtColor(image_frame,cv2.COLOR_BGR2GRAY)   # Convert the image into gray scale to remove extra calculation
+         faces = face_detector.detectMultiScale(gray, 1.3, 5)   # Returns the objects(faces) of different sizes 
+         for(x,y,w,h) in faces:                 #  faces holds value (x,y,w,h) for each object so looping through them x,y = coordinates and w,h = width, height
+            cv2.rectangle(image_frame,(x,y),(x+w,y+h),(255,0,0),2)
+            count += 1
+            cv2.imwrite("dataset/"+name+'.'+str(face_id)+'.'+str(count)+".jpg", gray[y: y+h, x : x+w])
+            cv2.imshow('frame', image_frame) 
+         if cv2.waitKey(1) and 0xFF == ord("q"):
+            break
+         elif count > 100:
+            break
+    vid_cam.release()
+    cv2.destroyAllWindows()
+if __name__ == '__main__':
+    add_face(name)
+   
